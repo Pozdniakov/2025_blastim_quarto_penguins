@@ -1,0 +1,135 @@
+---
+title: "Penguins"
+author: "Ivan Pozdniakov"
+date: "`r Sys.Date()`"
+format: html
+code-link: true
+echo: true
+editor: visual
+bibliography: bibliography.bib
+---
+
+## Непронумерованный список
+
+Пингвины *бывают* [@Wood2006] разных видов:
+
+-   Adelie
+
+-   Gentoo
+
+-   Chinstrap
+
+-   Eudyptula
+
+## Пронумерованный список
+
+А теперь *составим* [@pozdniakov2021] их **алфавитный** порядок:
+
+1.  Adelie
+
+2.  Chinstrap
+
+3.  Eudyptula
+
+4.  Gentoo
+
+А вот здесь [более полный список](https://ru.wikipedia.org/wiki/Список_пингвиновых).
+
+## Inline code, цитаты и footnotes
+
+Я больше не хочу вести список! Я хочу писать код! `mean(1:10)` -- вот этот код не выполнится, а вот этот выполнится: `r mean(1:10)`
+
+> Здесь должна быть цитата про пингвинов[^1]
+
+[^1]: Это не цитата, это ее отсутствие
+
+А это уже не цитата
+
+## Картинка
+
+![Виды пингвинов](https://www.gabemednick.com/post/penguin/featured.png)
+
+## Формула
+
+$$\frac{\Sigma^n_{i=1}(x -  \overline{x})^2}{n-1}$$
+
+## Пример кода
+
+```{r}
+#| echo: true
+library(tidyverse)
+library(gt)
+penguins <- read.csv("https://raw.githubusercontent.com/Pozdniakov/tidy_stats/refs/heads/master/data/penguins.csv")
+```
+
+## Описательная статистика
+
+```{r}
+penguins %>%
+  drop_na() %>%
+  group_by(island, species) %>%
+  summarise(across(starts_with("bill"), list(mean = mean, sd = sd))) %>%
+  gt()
+
+```
+
+## Как можно репортить статистику
+
+```{r}
+library(apa)
+t_results <- t.test(body_mass_g ~ sex, data = penguins, var.equal = TRUE)
+```
+
+Пингвины статистически различаются по весу (`r t_apa(t_results, format = "rmarkdown", print = FALSE)`).
+
+## График
+
+```{r}
+gg <- ggplot(penguins) +
+  geom_point(aes(x = bill_length_mm, y = bill_depth_mm, colour = species)) +
+  ggsci::scale_colour_aaas() +
+  hrbrthemes::theme_ipsum()
+gg
+```
+
+## {plotly}
+
+```{r}
+#| message: true
+library(plotly)
+ggplotly(gg)
+```
+
+## {echarts4r}
+
+```{r}
+library(echarts4r)
+penguins %>%
+  drop_na() %>%
+  group_by(species) %>%
+  summarise(across(where(is.numeric), mean)) %>%
+  e_charts(species) %>%
+  e_line(bill_length_mm, smooth = TRUE) %>%
+  e_area(bill_depth_mm, smooth = TRUE)
+  
+```
+
+## {DT}
+
+```{r}
+library(DT)
+datatable(penguins,
+          class = "compact",
+          style = "bootstrap4",
+          extensions = 'FixedColumns')
+```
+
+## {leaflet}
+
+```{r}
+library(leaflet)
+geo_penguins <- read_csv("https://raw.githubusercontent.com/Pozdniakov/tidy_stats/refs/heads/master/data/geo_penguins.csv")
+leaflet(geo_penguins) %>%
+  addTiles() %>%
+  addMarkers(lng = ~longitude, lat = ~latitude, popup = ~island)
+```
